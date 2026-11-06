@@ -16,7 +16,7 @@ function App() {
   const [mathNum2, setMathNum2] = useState(4);
   const [mathAnswer, setMathAnswer] = useState('');
 
-  const API_URL = "http://127.0.0.1:8000"; 
+  const API_URL = "https://earning-backend-api.onrender.com/"; 
   const AD_LINK = "https://auctionr.org/4/127385e7ba2241d837118ee560a6ed84"; 
   // Naye tab mein Offerwall ka link (Aap apna CPALead/TimeWall link yahan lagayenge)
   const OFFERWALL_LINK = "https://cpalead.com/dummy-offerwall-link"; 
