@@ -18,6 +18,7 @@ function App() {
 
   const API_URL = "https://earning-backend-api.onrender.com"; 
   const AD_LINK = "https://auctionr.org/4/127385e7ba2241d837118ee560a6ed84"; 
+  const OFFERWALL_LINK = "https://cpalead.com/dummy-offerwall-link"; // Y apna CPALead/TimeWall link dalein
 
   const handleLogin = async () => {
     if (!username.trim()) return setMessage("Enter a username!");
@@ -76,7 +77,6 @@ function App() {
     }, requiredWaitTime * 1000); 
   };
 
-  // Handle Withdrawal Request
   const handleWithdraw = async (e) => {
     e.preventDefault();
     if (!accountNumber || !withdrawAmount) {
@@ -115,7 +115,7 @@ function App() {
       <h2>CashUp - Earning App 💰</h2>
       
       {!loggedInUser ? (
-        <div style={{ background: '#f9f9f9', padding: '20px', borderRadius: '10px' }}>
+        <div style={{ background: '#f9f9f9', padding: '20px', borderRadius: '10px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
           <p>Login or Create Account:</p>
           <input type="text" placeholder="Choose Username" value={username} onChange={(e) => setUsername(e.target.value)} style={inputStyle} />
           <input type="text" placeholder="Invite Code (Optional)" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} style={inputStyle} />
@@ -127,11 +127,17 @@ function App() {
           <h1 style={{ color: '#ff9800', margin: '10px 0' }}>{balance} Coins</h1>
           
           <div style={{ background: '#e9ecef', padding: '10px', borderRadius: '5px', marginBottom: '15px' }}>
-            <small>Your Invite Code: <b>{myRefCode}</b> (Get 100 Coins)</small>
+            <small>Your Invite Code: <b>{myRefCode}</b> (Get 100 Coins per invite)</small>
           </div>
           
-          {/* Earning Buttons */}
+          {/* Earning & Offerwall Buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            
+            {/* Offerwalls Button (Highest Payout) */}
+            <button onClick={() => window.open(`${OFFERWALL_LINK}?subid=${loggedInUser}`, '_blank')} style={btnStyle('#17a2b8')}>
+              🔥 Complete Offers & Surveys (High Pay)
+            </button>
+
             <button onClick={() => triggerEarning('daily-bonus', 3)} disabled={isLoading} style={btnStyle('#e83e8c')}>
               🎁 Claim Daily Bonus (50 Coins)
             </button>
@@ -156,7 +162,7 @@ function App() {
 
           {/* Withdrawal Section */}
           <div style={{ background: 'white', padding: '15px', borderRadius: '8px', border: '1px solid #ddd', marginTop: '20px', textAlign: 'left' }}>
-            <h4 style={{ textAlign: 'center', margin: '0 0 10px 0', color: '#333' }}>💸 Request Withdrawal</h4>
+            <h4 style={{ textAlign: 'center', margin: '0 0 10px 0', color: '#333' }}>💸 Request Withdrawal (JazzCash / EasyPaisa)</h4>
             <form onSubmit={handleWithdraw}>
               <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Payment Method:</label>
               <select value={withdrawMethod} onChange={(e) => setWithdrawMethod(e.target.value)} style={{...inputStyle, width: '100%', marginBottom: '8px'}}>
