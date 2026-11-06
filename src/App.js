@@ -11,17 +11,14 @@ function App() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Math Quiz States
-  const [mathNum1, setMathNum1] = useState(5);
-  const [mathNum2, setMathNum2] = useState(4);
-  const [mathAnswer, setMathAnswer] = useState('');
+  // Withdrawal States
+  const [withdrawMethod, setWithdrawMethod] = useState('JazzCash');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
 
   const API_URL = "https://earning-backend-api.onrender.com"; 
   const AD_LINK = "https://auctionr.org/4/127385e7ba2241d837118ee560a6ed84"; 
-  // Naye tab mein Offerwall ka link (Aap apna CPALead/TimeWall link yahan lagayenge)
-  const OFFERWALL_LINK = "https://cpalead.com/dummy-offerwall-link"; 
 
-  // --- LOGIN ---
   const handleLogin = async () => {
     if (!username.trim()) return setMessage("Enter a username!");
     try {
@@ -33,7 +30,7 @@ function App() {
       if (response.ok || response.status === 400) {
         setLoggedInUser(username.trim());
         fetchUserInfo(username.trim());
-        setMessage(`Welcome to Max Earning App!`);
+        setMessage(`Welcome, ${username.trim()}!`);
       }
     } catch (error) {
       setMessage("Server connection failed!");
@@ -41,19 +38,22 @@ function App() {
   };
 
   const fetchUserInfo = async (user) => {
-    const response = await fetch(`${API_URL}/user-info/${user}`);
-    if (response.ok) {
-      const data = await response.json();
-      setBalance(data.balance);
-      setMyRefCode(data.referral_code);
+    try {
+      const response = await fetch(`${API_URL}/user-info/${user}`);
+      if (response.ok) {
+        const data = await response.json();
+        setBalance(data.balance);
+        setMyRefCode(data.referral_code);
+      }
+    } catch (error) {
+      console.error("Fetch failed");
     }
   };
 
-  // --- GENERAL EARNING FUNCTION ---
   const triggerEarning = (endpoint, requiredWaitTime) => {
-    window.open(AD_LINK, '_blank'); // Har action par ad chalega
+    window.open(AD_LINK, '_blank'); 
     setIsLoading(true);
-    setMessage(`Action processing... wait ${requiredWaitTime} seconds ⏳`);
+    setMessage(`Processing task... please wait ${requiredWaitTime}s ⏳`);
 
     setTimeout(async () => {
       try {
@@ -67,7 +67,7 @@ function App() {
           setMessage(`🎉 ${data.message}`);
           setBalance(data.new_balance);
         } else {
-          setMessage(`⚠️ ${data.detail}`);
+          setMessage(`⚠️ ${data.detail || "Error completing task"}`);
         }
       } catch (error) {
         setMessage("Server error.");
@@ -76,37 +76,43 @@ function App() {
     }, requiredWaitTime * 1000); 
   };
 
-  // --- MATH QUIZ LOGIC ---
-  const handleMathSubmit = async () => {
-    const correctAnswer = mathNum1 + mathNum2;
-    if (parseInt(mathAnswer) !== correctAnswer) {
-      setMessage("⚠️ Wrong Answer! Try again.");
+  // Handle Withdrawal Request
+  const handleWithdraw = async (e) => {
+    e.preventDefault();
+    if (!accountNumber || !withdrawAmount) {
+      setMessage("⚠️ Please fill all withdrawal fields!");
       return;
     }
-    window.open(AD_LINK, '_blank'); // Math hal karne par bhi Ad khulega
+
     try {
-      const response = await fetch(`${API_URL}/solve-math/`, {
+      const response = await fetch(`${API_URL}/request-withdrawal/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: loggedInUser, secret_token: "MySuperSecretAppToken123", is_correct: true })
+        body: JSON.stringify({
+          username: loggedInUser,
+          secret_token: "MySuperSecretAppToken123",
+          amount: parseInt(withdrawAmount),
+          method: withdrawMethod,
+          account_number: accountNumber
+        })
       });
       const data = await response.json();
       if (response.ok) {
-        setMessage(`🧠 ${data.message}`);
+        setMessage(`✅ ${data.message}`);
         setBalance(data.new_balance);
-        // Naya sawal generate karein
-        setMathNum1(Math.floor(Math.random() * 20));
-        setMathNum2(Math.floor(Math.random() * 20));
-        setMathAnswer('');
+        setAccountNumber('');
+        setWithdrawAmount('');
+      } else {
+        setMessage(`⚠️ ${data.detail}`);
       }
     } catch (error) {
-      setMessage("Error submitting answer.");
+      setMessage("Withdrawal failed due to server error.");
     }
   };
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial', maxWidth: '450px', margin: 'auto', textAlign: 'center' }}>
-      <h2>CashUp - Mega Earning 💰</h2>
+      <h2>CashUp - Earning App 💰</h2>
       
       {!loggedInUser ? (
         <div style={{ background: '#f9f9f9', padding: '20px', borderRadius: '10px' }}>
@@ -124,64 +130,61 @@ function App() {
             <small>Your Invite Code: <b>{myRefCode}</b> (Get 100 Coins)</small>
           </div>
           
-          {/* Earning Grid */}
+          {/* Earning Buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            
-            {/* Standard Tasks */}
-            <button onClick={() => triggerEarning('daily-bonus', 3)} disabled={isLoading} style={btnStyle(isLoading ? '#ccc' : '#e83e8c')}>
+            <button onClick={() => triggerEarning('daily-bonus', 3)} disabled={isLoading} style={btnStyle('#e83e8c')}>
               🎁 Claim Daily Bonus (50 Coins)
             </button>
 
-            <button onClick={() => triggerEarning('watch-video', 30)} disabled={isLoading} style={btnStyle(isLoading ? '#ccc' : '#dc3545')}>
-              🎬 Watch Premium Video (30 Coins - Wait 30s)
+            <button onClick={() => triggerEarning('watch-video', 5)} disabled={isLoading} style={btnStyle('#dc3545')}>
+              🎬 Watch Video Ad (30 Coins)
             </button>
 
-            <button onClick={() => triggerEarning('add-points', 5)} disabled={isLoading} style={btnStyle(isLoading ? '#ccc' : '#007bff')}>
-              📺 Quick Ad View (10 Coins - Wait 5s)
+            <button onClick={() => triggerEarning('add-points', 3)} disabled={isLoading} style={btnStyle('#007bff')}>
+              📺 Quick Ad View (10 Coins)
             </button>
 
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => triggerEarning('spin-wheel', 5)} disabled={isLoading} style={{...btnStyle(isLoading ? '#ccc' : '#6f42c1'), flex: 1}}>
+              <button onClick={() => triggerEarning('spin-wheel', 3)} disabled={isLoading} style={{...btnStyle('#6f42c1'), flex: 1}}>
                 🎡 Spin Wheel
               </button>
-              <button onClick={() => triggerEarning('scratch-card', 5)} disabled={isLoading} style={{...btnStyle(isLoading ? '#ccc' : '#fd7e14'), flex: 1}}>
+              <button onClick={() => triggerEarning('scratch-card', 3)} disabled={isLoading} style={{...btnStyle('#fd7e14'), flex: 1}}>
                 🎟️ Scratch Card
               </button>
             </div>
-
-            {/* Offerwalls (Highest Paying) */}
-            <button onClick={() => window.open(OFFERWALL_LINK, '_blank')} style={btnStyle('#17a2b8')}>
-              🔥 Complete Offers & Surveys (Max Earnings)
-            </button>
-
-            {/* Math Quiz Section */}
-            <div style={{ background: 'white', padding: '15px', borderRadius: '8px', border: '1px solid #ddd', marginTop: '10px' }}>
-              <h4>🧠 Math Quiz (5 Coins)</h4>
-              <p>Solve: {mathNum1} + {mathNum2} = ?</p>
-              <input 
-                type="number" 
-                value={mathAnswer} 
-                onChange={(e) => setMathAnswer(e.target.value)} 
-                style={{ padding: '8px', width: '60px', marginRight: '10px' }} 
-              />
-              <button onClick={handleMathSubmit} style={{ padding: '8px 15px', background: '#28a745', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
-                Submit
-              </button>
-            </div>
-
           </div>
+
+          {/* Withdrawal Section */}
+          <div style={{ background: 'white', padding: '15px', borderRadius: '8px', border: '1px solid #ddd', marginTop: '20px', textAlign: 'left' }}>
+            <h4 style={{ textAlign: 'center', margin: '0 0 10px 0', color: '#333' }}>💸 Request Withdrawal</h4>
+            <form onSubmit={handleWithdraw}>
+              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Payment Method:</label>
+              <select value={withdrawMethod} onChange={(e) => setWithdrawMethod(e.target.value)} style={{...inputStyle, width: '100%', marginBottom: '8px'}}>
+                <option value="JazzCash">JazzCash</option>
+                <option value="EasyPaisa">EasyPaisa</option>
+              </select>
+
+              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Account Number / Phone:</label>
+              <input type="text" placeholder="03001234567" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} style={{...inputStyle, width: '100%', marginBottom: '8px'}} />
+
+              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Amount (Min 500 Coins):</label>
+              <input type="number" placeholder="500" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} style={{...inputStyle, width: '100%', marginBottom: '10px'}} />
+
+              <button type="submit" style={btnStyle('#28a745')}>Submit Withdrawal</button>
+            </form>
+          </div>
+
         </div>
       )}
 
-      <p style={{ marginTop: '15px', fontSize: '14px', fontWeight: 'bold', color: message.includes('🎉') || message.includes('🧠') ? 'green' : (message.includes('⚠️') ? 'red' : '#ff9800') }}>
+      <p style={{ marginTop: '15px', fontSize: '14px', fontWeight: 'bold', color: message.includes('🎉') || message.includes('✅') ? 'green' : (message.includes('⚠️') ? 'red' : '#ff9800') }}>
         {message}
       </p>
     </div>
   );
 }
 
-// Minimal Styles
-const inputStyle = { padding: '10px', width: '90%', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' };
-const btnStyle = (bg) => ({ padding: '12px', cursor: 'pointer', background: bg, color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px' });
+const inputStyle = { padding: '8px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box' };
+const btnStyle = (bg) => ({ padding: '12px', cursor: 'pointer', background: bg, color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px', width: '100%' });
 
 export default App;
