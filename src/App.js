@@ -3,7 +3,10 @@ import './App.css';
 
 function App() {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+  
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [balance, setBalance] = useState(0);
   const [myRefCode, setMyRefCode] = useState('');
@@ -18,17 +21,32 @@ function App() {
 
   const API_URL = "https://earning-backend-api.onrender.com"; 
   const AD_LINK = "https://auctionr.org/4/127385e7ba2241d837118ee560a6ed84"; 
-  const OFFERWALL_LINK = "https://cpalead.com/dummy-offerwall-link"; // Y apna CPALead/TimeWall link dalein
+  const OFFERWALL_LINK = "https://cpalead.com/dummy-offerwall-link"; // Apna CPALead/TimeWall link yahan dalein
 
   const handleLogin = async () => {
-    if (!username.trim()) return setMessage("Enter a username!");
+    if (!username.trim() || !email.trim() || !phone.trim()) {
+      return setMessage("⚠️ Please fill Username, Email, and Phone!");
+    }
+    
     try {
       const response = await fetch(`${API_URL}/create-user/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), referred_by: inviteCode.trim() || null })
+        body: JSON.stringify({ 
+          username: username.trim(), 
+          email: email.trim(),
+          phone: phone.trim(),
+          referred_by: inviteCode.trim() || null 
+        })
       });
+      const data = await response.json();
+      
       if (response.ok || response.status === 400) {
+        // Agar 400 error aaye aur wo 'Email/Phone in use' ka na ho, toh login proceed karo
+        if (response.status === 400 && data.detail) {
+           setMessage(`⚠️ ${data.detail}`);
+           return;
+        }
         setLoggedInUser(username.trim());
         fetchUserInfo(username.trim());
         setMessage(`Welcome, ${username.trim()}!`);
@@ -116,10 +134,13 @@ function App() {
       
       {!loggedInUser ? (
         <div style={{ background: '#f9f9f9', padding: '20px', borderRadius: '10px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-          <p>Login or Create Account:</p>
-          <input type="text" placeholder="Choose Username" value={username} onChange={(e) => setUsername(e.target.value)} style={inputStyle} />
-          <input type="text" placeholder="Invite Code (Optional)" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} style={inputStyle} />
-          <button onClick={handleLogin} style={btnStyle('#28a745')}>Start Earning</button>
+          <p style={{fontWeight: 'bold', marginBottom: '15px'}}>Create Account / Login:</p>
+          <input type="text" placeholder="Choose Username" value={username} onChange={(e) => setUsername(e.target.value)} style={{...inputStyle, width: '100%', marginBottom: '8px'}} />
+          <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} style={{...inputStyle, width: '100%', marginBottom: '8px'}} />
+          <input type="text" placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} style={{...inputStyle, width: '100%', marginBottom: '8px'}} />
+          <input type="text" placeholder="Invite Code (Optional)" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} style={{...inputStyle, width: '100%', marginBottom: '15px'}} />
+          
+          <button onClick={handleLogin} style={btnStyle('#28a745')}>Register & Start Earning</button>
         </div>
       ) : (
         <div style={{ background: '#f4f4f4', padding: '15px', borderRadius: '10px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
@@ -130,10 +151,9 @@ function App() {
             <small>Your Invite Code: <b>{myRefCode}</b> (Get 100 Coins per invite)</small>
           </div>
           
-          {/* Earning & Offerwall Buttons */}
+          {/* Earning Buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             
-            {/* Offerwalls Button (Highest Payout) */}
             <button onClick={() => window.open(`${OFFERWALL_LINK}?subid=${loggedInUser}`, '_blank')} style={btnStyle('#17a2b8')}>
               🔥 Complete Offers & Surveys (High Pay)
             </button>
@@ -162,7 +182,7 @@ function App() {
 
           {/* Withdrawal Section */}
           <div style={{ background: 'white', padding: '15px', borderRadius: '8px', border: '1px solid #ddd', marginTop: '20px', textAlign: 'left' }}>
-            <h4 style={{ textAlign: 'center', margin: '0 0 10px 0', color: '#333' }}>💸 Request Withdrawal (JazzCash / EasyPaisa)</h4>
+            <h4 style={{ textAlign: 'center', margin: '0 0 10px 0', color: '#333' }}>💸 Request Withdrawal</h4>
             <form onSubmit={handleWithdraw}>
               <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Payment Method:</label>
               <select value={withdrawMethod} onChange={(e) => setWithdrawMethod(e.target.value)} style={{...inputStyle, width: '100%', marginBottom: '8px'}}>
@@ -183,7 +203,7 @@ function App() {
         </div>
       )}
 
-      <p style={{ marginTop: '15px', fontSize: '14px', fontWeight: 'bold', color: message.includes('🎉') || message.includes('✅') ? 'green' : (message.includes('⚠️') ? 'red' : '#ff9800') }}>
+      <p style={{ marginTop: '15px', fontSize: '14px', fontWeight: 'bold', color: message.includes('🎉') || message.includes('✅') || message.includes('Welcome') ? 'green' : (message.includes('⚠️') ? 'red' : '#ff9800') }}>
         {message}
       </p>
     </div>
